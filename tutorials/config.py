@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+print('Hi I got imported')
+
 @dataclass
 class GlobalConfig:
     # Single representation
