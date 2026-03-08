@@ -208,7 +208,7 @@ class CenterRandomAugmentation(nn.Module):
 
         if rand_rot is None:
             rand_rot = utils.rand_rot(batch_shape, device=device)
-            rand_trans = self.s_trans * torch.randn(batch_shape+(1,3), device=device)
+            rand_trans = self.s_trans * torch.randn(batch_shape+(3,), device=device)
 
         x = torch.einsum('...ji,...nj->...ni', rand_rot, x) + rand_trans[..., None, :]
 

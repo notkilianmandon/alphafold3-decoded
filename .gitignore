@@ -1,6 +1,7 @@
 # Important!! The AlphaFold3 params may not be published.
 data/params/*
 data/tensortraces
+data/out
 data/datasets
 !data/params/diff_fourier_bias.pt
 !data/params/diff_fourier_weight.pt

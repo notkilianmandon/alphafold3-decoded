@@ -145,7 +145,7 @@ class BuildBatch(Transform):
 
         batch = tree_map(lambda x: torch.tensor(x), batch)
 
-        return {"batch": batch}
+        return { "batch": batch, "atom_array": data["atom_array"] }
 
 
 def custom_af3_pipeline(

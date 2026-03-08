@@ -249,9 +249,8 @@ def batch_test():
     ...
 
 def inference():
-    test_name = 'lysozyme'
-    with torch.no_grad():
-        config = Config()
+    test_name = 'protein_rna_ion'
+    config = Config()
 
     model = Model(config)
     params = torch.load('data/params/af3_pytorch.pt')
@@ -260,6 +259,7 @@ def inference():
     t1 = time.time()
     data = load_alphafold_input(f'data/fold_inputs/fold_input_{test_name}.json')
     transform = custom_af3_pipeline(config)
+    print(f'Featurization took {time.time()-t1:.1f} seconds.')
 
     data = transform.forward(data)
     batch = data['batch']
@@ -271,20 +271,37 @@ def inference():
 
     batch: Batch = tree_map(lambda x: x.to(device=device), batch)
 
+    # model = torch.compile(model)
+
     model = model.to(device=device)
     model.eval()
+
+    torch.cuda.memory._record_memory_history(
+       max_entries=100000
+    )
+
     x_out = model(batch)
 
+    try:
+        torch.cuda.memory._dump_snapshot(f"mem_profile.pickle")
+    except Exception as e:
+        print(f"Failed to capture memory snapshot {e}")
+
+    # Stop recording memory snapshot history.
+    torch.cuda.memory._record_memory_history(enabled=None)
+
     atom_array = data['atom_array']
-    atom_mask = batch.ref_struct.mask.cpu().numpy()
-    atom_array.coord = x_out[atom_mask]
+    atom_mask = batch.reference_features.mask.cpu().numpy()
+    atom_array.coord = x_out[atom_mask].cpu().numpy()
     to_cif_file(atom_array, f'data/out/{test_name}.cif')  
 
 
 
 if __name__=='__main__':
-    test_name = 'lysozyme'
-    with torch.no_grad(), ttr.TensorTrace(f'data/tensortraces/{test_name}_trace', mode='read', framework='pytorch'):
-        main(test_name)
+    with torch.no_grad():
+        inference()
+    # test_name = 'lysozyme'
+    # with torch.no_grad(), ttr.TensorTrace(f'data/tensortraces/{test_name}_trace', mode='read', framework='pytorch'):
+    #     main(test_name)
     # with torch.no_grad():
     #     batch_test()
